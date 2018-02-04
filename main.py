@@ -7,6 +7,7 @@ pygame.camera.init()
 bigCalibri=pygame.font.SysFont ("Calibri",30)
 smallCalibri=pygame.font.SysFont("Calibri",20)
 gui=pygame.image.load('gui.png')
+subjectHere=pygame.image.load('subjectHere.png')
 
 RED= (255,0,0)
 BLACK=(0,0,0)
@@ -63,7 +64,7 @@ def simpleCompare(camEncoding,refEncodings):
 
 def targetDataBlit(nonVolitileListPosition, nonVolitileListLocal,imageListLocal,nameListLocal,crimesListLocal):
     localIndex = nonVolitileListLocal[nonVolitileListPosition]
-    pygame.draw.rect(screen,(0,0,0),(640,0,200,400))
+    screen.blit(subjectHere,(640,0,200,400))
     screen.blit(imageListLocal[localIndex],(640,0))
     localName=bigCalibri.render(nameListLocal[localIndex],False,(255,0,0))
     screen.blit(localName,(640,155))
@@ -78,17 +79,16 @@ def targetDataBlit(nonVolitileListPosition, nonVolitileListLocal,imageListLocal,
 
 def infoCollisions(x, y, mouseButton,nonVolitileListLocal, indexForNonVolitileList):
     mouseHitRect=pygame.Rect(x,y,1,1)
-    actionList=[(640,400,200,40),(640,440,100,40),(740,440,100,40)]
-    for x in actionList:
-        pygame.draw.rect(screen, GREEN, (x),2)
-    pygame.display.flip()
+    actionList=[(640,400,100,40),(740,400,100,40),(640,440,100,40),(740,440,100,40)]
     collide=mouseHitRect.collidelist(actionList)
     if collide != -1 and mouseButton==1:
         if collide==0:
             nonVolitileListLocal=[]
-        elif collide==2 and indexForNonVolitileList < len(nonVolitileListLocal)-1:
+        elif collide==1:
+            addData(getLastKey())
+        elif collide==3 and indexForNonVolitileList < len(nonVolitileListLocal)-1:
             indexForNonVolitileList+=1
-        elif collide==1 and indexForNonVolitileList > 0:
+        elif collide==2 and indexForNonVolitileList > 0:
             indexForNonVolitileList-=1
     return nonVolitileListLocal, indexForNonVolitileList
 
@@ -108,6 +108,41 @@ def getVal(tup):
         if tup[i]==1:
             return i+1
     return 0
+
+def getLastKey():
+    pathList = []
+    database = open("existingdata.dat",'r')
+    while True:
+        dataline = database.readline()
+        if dataline == '':
+            break
+        dataline = dataline.replace('\n','')
+        record = dataline.split(';')[0]
+        pathList.append(record)
+    return pathList[-1]
+
+def addData(lastKey):
+    lastKey = lastKey.replace('.jpg','')
+    record = str(int(lastKey) + 1) + '.jpg;'
+    camFrame = pygame.image.load("/home/deeplearning/videoFrame.jpg")
+    fileLocation = '/home/deeplearning/Desktop/HACKATHON/existingfaces/'+record.replace(';','')
+    pygame.image.save(camFrame,fileLocation)
+    name = input("Please enter the person's name: ")
+    if name == '':
+        return ''
+    record += name + ';'
+    while True:
+        crime = input("Please enter brief descriptions of the person's offense (END to stop): ")
+        if crime == "END":
+            break
+        record += crime + '*'
+    record = record[0:len(record)-1]
+    finalReferenceEncodings.append(face_recognition.face_encodings(face_recognition.load_image_file(fileLocation)))
+    nameList.append(name)
+    crimessList.append(record.split(';')[2])
+    database = open("existingdata.dat",'a')
+    database.write(record)
+    database.close()
 
 targetList,nameList,crimesList=readDatabase()
 targetFaceList=compileImages(targetList)
@@ -181,10 +216,10 @@ while running:
     if nonVolitileList != []:
         targetDataBlit(blitCounter, nonVolitileList,pygameImages,nameList,crimesList)
     else:
-        pygame.draw.rect(screen,(0,0,0),(640,0,200,400))
+        screen.blit(subjectHere,(640,0,200,400))
          #placeholder rectangle
     screen.blit(gui,(640,400,100,100))
     pygame.display.flip()
-    clock.tick(10)
+    clock.tick(20)
 wifiCam.stop()
 # pygame.quit()
