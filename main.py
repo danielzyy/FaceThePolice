@@ -217,6 +217,7 @@ while running:
         targetDataBlit(blitCounter, nonVolitileList,pygameImages,nameList,crimesList)
     else:
         screen.blit(subjectHere,(640,0,200,400))
+        blitCounter = 0
          #placeholder rectangle
     screen.blit(gui,(640,400,100,100))
     pygame.display.flip()
